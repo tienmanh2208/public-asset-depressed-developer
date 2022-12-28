@@ -59,14 +59,3 @@ $ExhaustiveSolution(I)$
 &emsp;&emsp;&emsp; $S_{max}=S_i$
 
 &emsp;Return $S_{max}$
-
-```KaTeX
-ExhaustiveSolution(I) \\newline
-\\ \\ \\ \\ j = 0 \\newline
-\\ \\ \\ \\ $S_{max} = 0$ \\newline
-\\ \\ \\ \\ For each of the $2^n$ subsets $S_i$ of intervals $I$ \\newline
-\\ \\ \\ \\ \\ \\ \\ \\ If ($S_i$ is mutually non-overlapping) and $(size(S_i) > j)$ \\newline
-\\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ $j = size(S_i)$ \\newline
-\\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ $S_{max}=S_i$ \\newline
-\\ \\ \\ \\ Return $S_{max}$
-```
