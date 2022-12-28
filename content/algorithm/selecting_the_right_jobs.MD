@@ -45,12 +45,19 @@ We will try all possible cases, and return the case that has the largest size.
 The algorithm might be like this:
 
 $ExhaustiveSolution(I)$
-&emsp;$j = 0$
-&emsp;$S_{max} = 0$
+
+&emsp; $j = 0$
+
+&emsp; $S_{max} = 0$
+
 &emsp;For each of the $2^n$ subsets $S_i$ of intervals $I$
+
 &emsp;&emsp;If ( $S_i$ is mutually non-overlapping) and $(size(S_i) > j)$
+
 &emsp;&emsp;&emsp; $j = size(S_i)$
+
 &emsp;&emsp;&emsp; $S_{max}=S_i$
+
 &emsp;Return $S_{max}$
 
 ```KaTeX
