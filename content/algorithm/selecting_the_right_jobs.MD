@@ -42,7 +42,7 @@ The answer for this example might be (C, F).
 
 We will try all possible cases, and return the case that has the largest size.
 
-The algorithm might be like this:
+Pseudocode of the algorithm:
 
 $ExhaustiveSolution(I)$
 
@@ -59,3 +59,35 @@ $ExhaustiveSolution(I)$
 &emsp;&emsp;&emsp; $S_{max}=S_i$
 
 &emsp;Return $S_{max}$
+
+**Why $2^n$ subsets?**
+
+Because we have to try all possible subsets so we must go from subset with zero element to subset with n elements. Each case we will have ${n \choose k}$ cases. So, total cases will be:
+
+$ {n \choose 0} + {n \choose 1} + {n \choose 2} + ... + {n \choose k} + ... + {n \choose n} = \sum_{k=0}^n {n \choose k} = 2^k$
+
+*You can see the the proof of this equation in this [link](https://en.wikipedia.org/wiki/Combination#Number_of_k-combinations_for_all_k)*
+
+You can see that this solution is really slow, it takes $O(2^n)$ to complete the algorithm.
+
+### Optimal solution
+
+We choose the job with the earliest end time, and remove it with all the overlapping jobs with the chosen job. And we will repeat that action over and over again until there is no job left. In the end, we'll get the largest list of jobs such that no two of them conflict with each other.
+
+With example 1, we will have these following step:
+
+|Earliest end time job|Jobs need to be removed|Remaining jobs|
+|---|---|---|
+|A|B, C|D, E, F, G, H, I|
+|D|E|F, G, H, I|
+|G|F, H|I|
+|I|||
+
+The result will be: `(A, D, G, I)`
+
+Pseudocode of this algorithm:
+
+OptimalSolution$(I)$
+&emsp;While $(I \neq \emptyset)$ do
+&emsp;&emsp;Accept the job $j$ from $I$ with the earliest completion date
+&emsp;&emsp;Delete $j$ and any interval which intersects $j$ from $I$
