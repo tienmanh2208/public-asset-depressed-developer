@@ -2,8 +2,6 @@
 
 This topic will go through all the essential definitions of the database internals.
 
-## 1. Storage concepts
-
 ### Pages
 
 Pages are fixed size memory locations. Rows of table are stored in these logical pages.
