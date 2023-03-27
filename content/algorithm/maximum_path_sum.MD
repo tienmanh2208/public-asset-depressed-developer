@@ -8,7 +8,7 @@ function processData(input) {
     const t = parseInt(input.shift());
 
     for (let i = 0; i < t; ++i) {
-        const height = parseInt(input.shift());
+        const height = parseInt(input.shift());íu
 
         const triangle = input.splice(0, height).map((row) => row.split(' ').map((each) => parseInt(each)))
 
