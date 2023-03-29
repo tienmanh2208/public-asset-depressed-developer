@@ -101,13 +101,13 @@ if first_number != 0:
 
 ### Optimal solution
 
-You can see that the basic way is way too slow. To optimize the algorithm, we will use **Sieve of Eratosthenes** algorithm. You can read more about this in [this link](#)
+You can see that the basic way is way too slow. To optimize the algorithm, we will use **Sieve of Eratosthenes** algorithm. You can read more about this in [this link](https://depressed-developer.vercel.app/detail/algorithm/4)
 
 The idea is we will create an array with `n + k` elements. And we will count the number of distinct primes for each elements (using sieve of Eratosthenes algorithm). And then, we will iterate though the array, and check if exist a sub array such that the number of distinct primes for each element in that array is equal to `k`.
 
 Example: `n = 20`, `k = 2`
 
-![Count number of prime factors](#)
+![Count number of prime factors](https://raw.githubusercontent.com/tienmanh2208/public-asset-depressed-developer/master/posts/algorithm/distinct_prime_factors/count_prime_factors.png)
 
 The above pictures illustrates the result we have after counting prime factors for each number (number is the index). You can see that there are two sub arrays that satisfy the condition (each element has two prime factors) is `(14, 15)` and `(20, 21)`, so we will print the first element of each array is `14` and `20`
 

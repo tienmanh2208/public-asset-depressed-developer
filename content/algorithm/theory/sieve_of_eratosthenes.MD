@@ -12,11 +12,11 @@ You have a range from 1 to 20, now you want to find all the prime numbers in thi
 - Unmark `1` as the prime number, keep `2` as the prime number.
 - You can see that `2` is the first prime number in the list, we will unmark all its multiples in the range as prime numbers. We will have the following result:
 
-![Multiples of two](https://raw.githubusercontent.com/tienmanh2208/public-asset-depressed-developer/master/posts/algorithm/sive_of_eratosthenes/multiple_of_two.png)
+![Multiples of two](https://raw.githubusercontent.com/tienmanh2208/public-asset-depressed-developer/master/posts/algorithm/sieve_of_eratosthenes/multiple_of_two.png)
 
 - The next number is `3`, you can see that it's still marked as prime number, so we will unmark all its multiples in the range as prime numbers. The result would be:
 
-![Multiples of three](https://raw.githubusercontent.com/tienmanh2208/public-asset-depressed-developer/master/posts/algorithm/sive_of_eratosthenes/multiple_of_three.png)
+![Multiples of three](https://raw.githubusercontent.com/tienmanh2208/public-asset-depressed-developer/master/posts/algorithm/sieve_of_eratosthenes/multiple_of_three.png)
 
 - The next number is `4`, this number is unmarked as prime number, so we will ignore this case.
 
@@ -24,7 +24,7 @@ You have a range from 1 to 20, now you want to find all the prime numbers in thi
 
 - We will do the same logic for the rest of the list. In the end, we will have this result:
 
-![Result](https://raw.githubusercontent.com/tienmanh2208/public-asset-depressed-developer/master/posts/algorithm/sive_of_eratosthenes/multiple_of_three.png)
+![Result](https://raw.githubusercontent.com/tienmanh2208/public-asset-depressed-developer/master/posts/algorithm/sieve_of_eratosthenes/multiple_of_three.png)
 
 ## Explaination and sample code
 
