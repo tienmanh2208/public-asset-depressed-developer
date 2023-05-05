@@ -25,7 +25,7 @@ CREATE DATABASE test;
 psql -U postgres test # Access database named test
 ```
 
-```shell
+```sql
 # Create table
 CREATE TABLE grades (
   id SERIAL UNIQUE NOT NULL,
@@ -34,9 +34,20 @@ CREATE TABLE grades (
 );
 
 INSERT INTO grades (name, grade)
-SELECT (
-  left(md5(i::text), 20),
+SELECT
+  left(md5(random()::text), 20),
   floor(random() * 10 + 1)::int
-)
-from generate_series(1, 1000000) s(i);
+from generate_series(1, 1000000);
 ```
+
+Verify data generated in the table:
+
+```sql
+test=# select count(*) from grades;
+  count  
+---------
+ 1000000
+(1 row)
+```
+
+
