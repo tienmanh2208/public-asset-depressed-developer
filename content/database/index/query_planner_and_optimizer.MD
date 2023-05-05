@@ -95,7 +95,7 @@ test=# explain analyze select * from grades where grade = 5 order by name asc li
 (14 rows)
 ```
 
-You can see that, if we add `limit` to our query, the planner will add fourth step is Limit to limit the number of return rows. We should concentrate on the start-up time of the Limit, it's 14427 ms, and it's exactly the same with start-up cost of Gather Merge step, It's not waiting for the `Gather Merge` end, Because we only takes `n` values, so the `Limit` step will start with `Gather Merge` step to optimize the performance of the query. The process will stop when there are enough rows. You can see the total cost of `Limit` step is way less than the total cost of `Gather Merge` step because it doesn't need to wait the `Gather Merge` step to be done. 
+You can see that, if we add `limit` to our query, the planner will add fourth step is Limit to limit the number of return rows. We should concentrate on the start-up time of the Limit, it's 14427 ms, and it's exactly the same with start-up cost of Gather Merge step, It's not waiting for the `Gather Merge` end, Because we only takes `n` values, so the `Limit` step will start with `Gather Merge` step to optimize the performance of the query. The process will stop when there are enough rows. You can see the total cost of `Limit` step is way less than the total cost of `Gather Merge` step because it doesn't need to wait the entire result set has been sorted. 
 
 ```sql
 test=# explain analyze select * from grades where grade = 5 order by name asc offset 5000 limit 100;
