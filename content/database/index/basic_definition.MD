@@ -30,13 +30,15 @@ psql -U postgres test # Access database named test
 CREATE TABLE grades (
   id SERIAL UNIQUE NOT NULL,
   name VARCHAR(50) NOT NULL,
-  grade INT NOT NULL
+  grade INT NOT NULL,
+  class INT NOT NULL
 );
 
-INSERT INTO grades (name, grade)
+INSERT INTO grades (name, grade, class)
 SELECT
   left(md5(random()::text), 20),
-  floor(random() * 10 + 1)::int
+  floor(random() * 10 + 1)::int,
+    floor(random() * 12 + 1)::int
 from generate_series(1, 1000000);
 ```
 

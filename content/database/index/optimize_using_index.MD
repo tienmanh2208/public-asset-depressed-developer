@@ -6,6 +6,7 @@ First, we will index the `grade` column.
 
 ```sql
 CREATE INDEX grade_asc ON grades (grade ASC);
+CREATE INDEX class_asc ON grades (class ASC);
 ```
 
 ## Query with index

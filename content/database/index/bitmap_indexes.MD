@@ -52,3 +52,51 @@ The planner firstly use `Bitmap Index Scan` to know what pages might contain sat
 Assume you are searching for `x = 1` and `y = 2`, you have indexes on `x` and `y`.
 
 The planner does not combine two condition into one bitmap right away. It split them into two different bitmap. And then, base on the condition `AND` or `OR`, these two bitmaps will be ANDed or ORed with each other (In this case, you want to find x = 1 **and** y = 2 so two bitmaps will be ANDed), finally we will have one bitmap satisfied both condition.
+
+Illustration:
+
+Assume data is saved follow this table:
+
+| Page | Data in page                  |
+|------|-------------------------------|
+| 0    | x = 1, y = 2<br/>x = 2, y = 1 |
+| 1    | x = 5, y = 6<br/>x = 2, y = 1 |
+| 2    | x = 8, y = 9<br/>x = 1, y = 9 |
+| 3    | x = 5, y = 6<br/>x = 2, y = 3 |
+| 4    | x = 5, y = 6<br/>x = 6, y = 2 |
+| 5    | x = 1, y = 6<br/>x = 6, y = 1 |
+
+Bitmap for condition `x = 1` will be:
+
+|           |       |   |       |   |   |       |
+|-----------|-------|---|-------|---|---|-------|
+| **Index** | 0     | 1 | 2     | 3 | 4 | 5     |
+| **Value** | **1** | 0 | **1** | 0 | 0 | **1** |
+
+Bitmap for condition `y = 2` will be:
+
+|           |       |   |   |   |       |   |
+|-----------|-------|---|---|---|-------|---|
+| **Index** | 0     | 1 | 2 | 3 | 4     | 5 |
+| **Value** | **1** | 0 | 0 | 0 | **1** | 0 |
+
+After 
+
+Check this sql:
+
+```sql
+test=# explain analyze select * from grades where grade in (2, 5, 6) and class in (2, 7, 3, 5);
+                                                              QUERY PLAN                                                               
+---------------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on grades  (cost=6670.81..16874.15 rows=99698 width=33) (actual time=18.786..34.063 rows=100441 loops=1)
+   Recheck Cond: ((grade = ANY ('{2,5,6}'::integer[])) AND (class = ANY ('{2,7,3,5}'::integer[])))
+   Heap Blocks: exact=8334
+   ->  BitmapAnd  (cost=6670.81..6670.81 rows=99698 width=0) (actual time=17.830..17.831 rows=0 loops=1)
+         ->  Bitmap Index Scan on grade_asc  (cost=0.00..3158.03 rows=300900 width=0) (actual time=10.447..10.447 rows=300269 loops=1)
+               Index Cond: (grade = ANY ('{2,5,6}'::integer[]))
+         ->  Bitmap Index Scan on class_asc  (cost=0.00..3462.69 rows=331333 width=0) (actual time=7.047..7.047 rows=333282 loops=1)
+               Index Cond: (class = ANY ('{2,7,3,5}'::integer[]))
+ Planning Time: 0.187 ms
+ Execution Time: 36.033 ms
+(10 rows)
+```
