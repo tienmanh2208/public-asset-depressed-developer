@@ -49,7 +49,7 @@ The planner firstly use `Bitmap Index Scan` to know what pages might contain sat
 
 ### Case query has more than one condition
 
-Assume you are searching for `x = 1` and `y = 2`, you have indexes on `x` and `y`.
+Assume you are searching for `x = 1` and `y = 2`, you have indexes on `x` and `y`[Ref](https://stackoverflow.com/questions/33100637/understanding-bitmap-indexes-in-postgresql).
 
 The planner does not combine two condition into one bitmap right away. It split them into two different bitmap. And then, base on the condition `AND` or `OR`, these two bitmaps will be ANDed or ORed with each other (In this case, you want to find x = 1 **and** y = 2 so two bitmaps will be ANDed), finally we will have one bitmap satisfied both condition.
 
@@ -80,7 +80,18 @@ Bitmap for condition `y = 2` will be:
 | **Index** | 0     | 1 | 2 | 3 | 4     | 5 |
 | **Value** | **1** | 0 | 0 | 0 | **1** | 0 |
 
-After 
+After having these two information, the planner will AND them to get a bitmap that will statisfy both conditions `x = 1` and `y = 2`.
+
+|                   |       |     |       |     |       |       |
+|-------------------|-------|-----|-------|-----|-------|-------|
+| **Index**         | 0     | 1   | 2     | 3   | 4     | 5     |
+| **Bitmap(X)**     | **1** | 0   | **1** | 0   | 0     | **1** |
+| **AND**           | AND   | AND | AND   | AND | AND   | AND   |
+| **Bitmap(Y)**     | **1** | 0   | 0     | 0   | **1** | 0     |
+| **=**             | =     | =   | =     | =   | =     | =     |
+| **B(x) AND B(y)** | **1** | 0   | 0     | 0   | 0     | 0     |
+
+The result of the first step is the Bitmap(X = 1 and Y = 2). In the second step, the planner is going to do `Bitmap Heap Scan` to get all valid pages from table, and pages have many rows so maybe there are some invalid rows in these page, the planner need to recheck each row in the page (`Recheck Cond`).
 
 Check this sql:
 
@@ -100,3 +111,5 @@ test=# explain analyze select * from grades where grade in (2, 5, 6) and class i
  Execution Time: 36.033 ms
 (10 rows)
 ```
+
+This sql is real life use case when the planner is going to use two Bitmap Index Scan for each condition in where clause.
