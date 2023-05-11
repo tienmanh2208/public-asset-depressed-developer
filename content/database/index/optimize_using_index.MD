@@ -1,5 +1,16 @@
 # Using index to optimize query
 
+## What is `index`
+
+- Index is a data structure that has `pointers` to the heap
+- It has part of the data and used to quickly search for something
+- You can index on one column or more
+- Once you found a value of the index, you need to go back to the heap to fetch more information (if needed)
+- Index can tell you exactly which pages in the heap contain valid data instead of scanning all the pages and get valid data
+- The index is also stored as pages and cost IO to pull the entries of the index
+- The smaller the index, the more it can fit in memory, the faster the search
+- Popular data structure for index is B-Trees
+
 We went through some definition when using explain. Now we will use explain to analyze how index help improving query time.
 
 First, we will index the `grade` column.
@@ -76,6 +87,8 @@ There is a way to do that, is you create an index based on `name` column, and yo
 ```sql
 create index name_asc_include_grade on grades (name asc) include (grade);
 ```
+
+*Note:* the name is called `key column`, grade is called `non-key column`
 
 Before creating the index:
 

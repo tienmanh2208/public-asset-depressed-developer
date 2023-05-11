@@ -2,7 +2,7 @@
 
 ## Where
 
-Firstly, we will analyze the query to get all student with grade 5:
+Firstly, we will analyze the query to get all students with grade 5:
 
 ```sql
 test=# explain analyze select * from grades where grade = 5;
@@ -16,15 +16,15 @@ test=# explain analyze select * from grades where grade = 5;
 (5 rows)
 ```
 
-This is example response from query planner when you analyze a query.
+This is an example response from query planner when you analyze a query.
 
-- Seq Scan is scanning data plan to filter data. There are 3 different plans DBMS may use depending on situation.
+- Seq Scan is scanning data plan to filter data. There are 3 different plans DBMS may use depending on the situation.
   - Sequential scans: Scan all records in the table
   - Index scans: Scan records using index
   - Bitmap index scans
 - `cost <Estimated start-up cost>..<Estimated total cost>`: The cost has two numbers
-  - The first number is the time the DBMS thinks it may need to fetch the first page (Maybe zero). If this number is huge, it means you're doing alot of stuffs before fetching data. In the example above, time to get the first page is 0.00, and 
-  - The second number is total time the DBMS may need to fetch all the result.
+  - The first number is the time the DBMS thinks it may need to fetch the first page (Maybe zero). If this number is huge, it means you're doing a lot of stuff before fetching data. In the example above, time to get the first page is 0.00, and 
+  - The second number is total time the DBMS may need to fetch all the results.
 - `rows`: Estimated number of rows output
 - `width`: Estimated average width of rows output (in bytes)
 - `Filter`: This is the conditions in where clause. This means, when it scans through each row, it will check, only rows that pass the condition will be outputted.
@@ -32,11 +32,11 @@ This is example response from query planner when you analyze a query.
 In the result above, you can see:
 
 - DBMS using `Seq Scan` plan for this query. So, it'll scan all 1000000 rows and filter out valid rows.
-- Time to fetch the first page may be 0.00, and time to fetch all result maybe is 19853ms.
-- Estimated return rows is 96200
-- Estimated average width of rows output is 29 bytes.
+- Time to fetch the first page may be 0.00, and time to fetch all results maybe is 19853ms.
+- Estimated return rows are 96200
+- The Estimated average width of rows output is 29 bytes.
 
-- If you run a query the first time, if you run the exact same query after that, you can see the execution time will be much more faster than the first one because of caching technique of DBMS
+- If you run a query the first time, if you run the exact same query after that, you can see the execution time will be much faster than the first one because of the caching technique of DBMS
 
 ## Where and sort
 
@@ -64,10 +64,10 @@ test=# explain analyze select * from grades where grade = 5 order by name asc;
 
 You can see that there is alot going on here.
 
-The planner has decided to use a three-step plan. In these case, we'll read from bottom to up direction.
+The planner has decided to use a three-step plan. In these cases, we'll read from bottom to up.
 
-- Firstly, the planner will scan the table to get rows that pass the condition in filter. It takes 0 ms to start, and about 12561 to fetch all the results. Estimated number of rows is 40083 with average length is 29 bytes. After this step, all the valid rows will be loaded into memory to be executed in next step.
-- Secondly, the planner will sort all the rows by `name` field. In this process, the planner uses two worker to sort data (It will split rows to 2 chunk, and sort them independently). Look at the cost, we can see that it's gonna take 15625 ms to finish the sorting action (this amount of time includes time in first step, that means, actually, the planner only needs 15625 - 12561 = 3064 to finish the sorting action). The time finish is 15726, it's quite similar to start-up cost because all the data is already in the memory, no need to fetch them from databases.
+- Firstly, the planner will scan the table to get rows that pass the condition in filter. It takes 0 ms to start, and about 12561 fetches all the results. The Estimated number of rows is 40083 with average length is 29 bytes. After this step, all the valid rows will be loaded into memory to be executed in the next step.
+- Secondly, the planner will sort all the rows by `name` field. In this process, the planner uses two workers to sort data (It will split rows to 2 chunks, and sort them independently). Looking at the cost, we can see that it's going to take 15625 ms to finish the sorting action (this amount of time includes time in the first step, that means, actually, the planner only needs `15625 - 12561 = 3064` to finish the sorting action). The time finish is 15726, it's quite similar to start-up cost because all the data is already in the memory, no need to fetch them from databases.
 - The final step, the planner will merge the results of two independent workers into one results.
 
 ## Optimize using limit
@@ -95,7 +95,7 @@ test=# explain analyze select * from grades where grade = 5 order by name asc li
 (14 rows)
 ```
 
-You can see that, if we add `limit` to our query, the planner will add fourth step is Limit to limit the number of return rows. We should concentrate on the start-up time of the Limit, it's 14427 ms, and it's exactly the same with start-up cost of Gather Merge step, It's not waiting for the `Gather Merge` end, Because we only takes `n` values, so the `Limit` step will start with `Gather Merge` step to optimize the performance of the query. The process will stop when there are enough rows. You can see the total cost of `Limit` step is way less than the total cost of `Gather Merge` step because it doesn't need to wait the entire result set has been sorted. 
+You can see that, if we add `limit` to our query, the planner will add a fourth step is Limit to limit the number of return rows. We should concentrate on the start-up time of the Limit, it's 14427 ms, and it's exactly the same with start-up cost of Gather Merge step, It's not waiting for the `Gather Merge` end, Because we only takes `n` values, so the `Limit` step will start with `Gather Merge` step to optimize the performance of the query. The process will stop when there are enough rows. You can see the total cost of `Limit` step is way less than the total cost of `Gather Merge` step because it doesn't need to wait the entire result set has been sorted. 
 
 ```sql
 test=# explain analyze select * from grades where grade = 5 order by name asc offset 5000 limit 100;
