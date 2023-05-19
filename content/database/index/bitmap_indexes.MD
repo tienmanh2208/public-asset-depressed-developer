@@ -4,7 +4,7 @@
 
 As we may know:
 
-- *Seq Scan*: (Sequence Scan) is a plan that the planner will go through all pages (also called heap) sequentially to find the valid rows. So even if there is a few records that matched the condition, we still need to check all records. (*Note*: Seq Scan is much faster than random I/O access)
+- *Seq Scan*: (Sequence Scan) is a plan that the planner will go through all pages (also called heap) sequentially to find the valid rows. So even if there are a few records that matched the condition, we still need to check all records. (*Note*: Seq Scan is much faster than random I/O access)
 - *Index Scan*: is a plan that the planner is using index to find the desired rows, this way is very fast to find the indexed value, but to get all the information related to that value, you need to go back to heap and get that data from heap page. So, the flow would be: When scanning the index (typically B-Tree structure), whenever the planner found a matched value, it will have index value (includes exact location of data in heap page: page number and offset of that value in page). After having that location, the planner will immediately go fetch that data from heap pages. So for each match, the planner will go to heap page to get data. If the number of matches is small, there is no problem here, but if not, this kind of getting data is called random I/O access. And you can see that there maybe a change the planner will go to one page many times. You can image the brief flow will be: **Fetch from index -> Fetch from heap page -> Fetch from index -> Fetch from heap page -> ... (so on). This causes random page access and hence random I/O**
 
 So you can see that `Seq Scan` is slow, and `Index Scan` can be fast, but it's still maybe slow if the number of values matched condition is huge.
@@ -13,7 +13,7 @@ From this problem, `Bitmap scan` was born to solve this problem.
 
 ## Bitmap Index Scan and Bitmap Heap scan
 
-You can see a reply from Postgres team in here [Ref](https://www.postgresql.org/message-id/12553.1135634231@sss.pgh.pa.us)
+You can see a reply from the Postgres team in here [Ref](https://www.postgresql.org/message-id/12553.1135634231@sss.pgh.pa.us)
 
 > A bitmap scan fetches all the tuple-pointers from the index in one go, sorts them using an in-memory "bitmap" data structure, and then visits the table tuples in physical tuple-location order.
 > The bitmap scan improves locality of reference to the table at the cost of more bookkeeping overhead to manage the "bitmap" data structure --- and at the cost that the data is no longer retrieved in index order, which doesn't matter for your query but would matter if you said ORDER BY.
@@ -45,13 +45,13 @@ test=# explain analyze select * from grades where grade = 5;
 (7 rows)
 ```
 
-The planner firstly use `Bitmap Index Scan` to know what pages might contain satisfied value. And then, the planner will use `Bitmap Heap Scan` to fetch pages that might have satisfied value (using bitmap array from previous step), and the planner have to `Recheck Cond` because these pages may contain invalid rows.
+The planner firstly use `Bitmap Index Scan` to know what pages might contain satisfied value. And then, the planner will use `Bitmap Heap Scan` to fetch pages that might have satisfied value (using bitmap array from previous step), and the planner has to `Recheck Cond` because these pages may contain invalid rows.
 
 ### Case query has more than one condition
 
 Assume you are searching for `x = 1` and `y = 2`, you have indexes on `x` and `y`[Ref](https://stackoverflow.com/questions/33100637/understanding-bitmap-indexes-in-postgresql).
 
-The planner does not combine two condition into one bitmap right away. It split them into two different bitmap. And then, base on the condition `AND` or `OR`, these two bitmaps will be ANDed or ORed with each other (In this case, you want to find x = 1 **and** y = 2 so two bitmaps will be ANDed), finally we will have one bitmap satisfied both condition.
+The planner does not combine two conditions into one bitmap right away. It splits them into two different bitmaps. And then, base on the condition `AND` or `OR`, these two bitmaps will be ANDed or ORed with each other (In this case, you want to find x = 1 **and** y = 2 so two bitmaps will be ANDed), finally we will have one bitmap satisfied both conditions.
 
 Illustration:
 
@@ -80,7 +80,7 @@ Bitmap for condition `y = 2` will be:
 | **Index** | 0     | 1 | 2 | 3 | 4     | 5 |
 | **Value** | **1** | 0 | 0 | 0 | **1** | 0 |
 
-After having these two information, the planner will AND them to get a bitmap that will statisfy both conditions `x = 1` and `y = 2`.
+After having this information, the planner will AND them to get a bitmap that will statisfy both conditions `x = 1` and `y = 2`.
 
 |                   |       |     |       |     |       |       |
 |-------------------|-------|-----|-------|-----|-------|-------|
@@ -91,7 +91,7 @@ After having these two information, the planner will AND them to get a bitmap th
 | **=**             | =     | =   | =     | =   | =     | =     |
 | **B(x) AND B(y)** | **1** | 0   | 0     | 0   | 0     | 0     |
 
-The result of the first step is the Bitmap(X = 1 and Y = 2). In the second step, the planner is going to do `Bitmap Heap Scan` to get all valid pages from table, and pages have many rows so maybe there are some invalid rows in these page, the planner need to recheck each row in the page (`Recheck Cond`).
+The result of the first step is the Bitmap(X = 1 and Y = 2). In the second step, the planner is going to do `Bitmap Heap Scan` to get all valid pages from table, and pages have many rows so maybe there are some invalid rows in these pages, the planner needs to recheck each row in the page (`Recheck Cond`).
 
 Check this sql:
 
@@ -112,4 +112,4 @@ test=# explain analyze select * from grades where grade in (2, 5, 6) and class i
 (10 rows)
 ```
 
-This sql is real life use case when the planner is going to use two Bitmap Index Scan for each condition in where clause.
+This sql is a real life use case when the planner is going to use two Bitmap Index Scan for each condition in where clause.
