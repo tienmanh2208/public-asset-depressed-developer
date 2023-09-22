@@ -1,6 +1,6 @@
 # How the database optimizer decides to use indexes
 
-We have a table with this information:
+We have a table with this information:asdfasdf
 
 ```sql
 test=# \d grades;
