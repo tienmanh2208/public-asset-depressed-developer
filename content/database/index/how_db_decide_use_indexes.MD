@@ -15,7 +15,7 @@ Indexes:
     "class_asc" btree (class)
     "grade_asc" btree (grade)
     "grades_id_key" UNIQUE CONSTRAINT, btree (id)
-    "name_asc" btree (name)
+    "name_asc" btree (name)asdfasdfas
     "name_asc_include_grade" btree (name) INCLUDE (grade)
 
 test=# select count(*) from grades;
