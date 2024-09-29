@@ -1,18 +1,18 @@
-# Server sent event (SSE) technique
+# Server-Sent Events (SSE) technique
 
 ## 1. What is server sent event
 - What is this
 
-Server sent event is a technical that server will send back to client multiple message before close the connection.
-You can see the diagram bellow, compare between normal flow with server sent event.
+Server-Sent Events is a technique that server sends multiple messages to the client over a single connection, which remains open until closed by the server.
+The diagram bellow illustrates the comparison between the normal request-response flow and SSE
 
 <img alt="Flow of SSE" src="https://depresseddeveloper.cloud/media/images/sharing/server_sent_event_compare.png" style="width: 600px;">
 
 - Pros
-  - Client will be updated with the latest status of BE in real-time without make another request to BE to know.
-  - Keep the connection alive, this can be very useful because some constraint about idle time between server and client (For example: If you use ALB to distribute request to server, the ALB will have an idle time, this is the maximum amount of time the connection between client and server remain idle - is the state that client and server does not send and data to each other - before timeout. If you use server sent event, you can keep the connection alive by send back to client a message after a period of time)
+  - Client will be updated with the latest status of BE in real-time without making another request to BE to know.
+  - Keeps the connection alive, this can be very useful because some constraint about idle time between server and client (For example: If you use ALB to distribute request to server, the ALB will have an idle time, this is the maximum amount of time the connection between client and server remain idle - is the state that client and server does not send and data to each other - before timeout. If you use server sent event, you can keep the connection alive by send back to client a message after a period of time)
 - Cons
-  - The server has to make room for this connection so that this connection can remain alive. But server has limited alive connection at a time, so if too many connection alive, it may block other request that want to connect to server.
+  - The server has to allocate resources for this connection so that this connection can remain alive. But server has a limited number of active connections at a time, so if too many connection alive, it may block other request that want to connect to server.
   - If you do not handle it well, this connection can alive forever.
 - Use cases
   - Use to keep a connection alive
