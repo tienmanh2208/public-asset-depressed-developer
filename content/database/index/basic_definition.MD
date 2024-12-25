@@ -13,6 +13,14 @@ I recommend you to understand some basic knowledge about database internals by r
 We will use `explain analyze <query>` to analyze the query.
 This command will show us which plan the planner is going to use, estimation execution time and return records.
 
+NOTE: `explain analyze` command will actually runs the query, so, all the information in response will be the actual result (like time to filter, time to validate, scanned rows). So, with `UPDATE`, `DELETE`, `INSERT` statement, you should push the explain query into a transaction in case you dont want to update/lose your data.
+
+```sql
+begin;
+explain analyze ...;
+rollback;
+```
+
 ## Install tools
 
 I'm going to use image `postgres` version `14-alpine` for this tutorial.
