@@ -90,3 +90,47 @@ where
     ...
     and floor(extract(epoch from updated_at) * 1000) = ${eventUpdatedAt.getTime()}
 ```
+
+## 3. Throw error when data of entire table changed
+
+Assume you have a table `events` with following structure:
+
+| Column name      | Type                     | Nullable |
+|------------------|--------------------------|----------|
+| id               | serial                   | FALSE    |
+| name             | varchar(255)             | TRUE     |
+| start_time       | timestamp with time zone | TRUE     |
+| end_time         | timestamp with time zone | TRUE     |
+| display_end_time | timestamp with time zone | TRUE     |
+
+constraint:
+- start_time <= end_time <= display_end_time
+- time ranges must not be overlapped
+
+How can you archive this constraint when multiple requests create/edit event at the same time?
+Take a moment to think about the solution.
+
+Here is my solution:
+
+What is the hardest part of this constraint? It's the `time ranges must not be overlapped`. The constraint `start_time <= end_time <= display_end_time` is easy to maintain with some logic in the server.
+
+Let's assume there is two request come to create event with `start_time = '2024-01-01'` and `display_end_time = '2025-01-01'`.
+So, the expected result would be 1 request will create successfully and the other is failed.
+
+But, if these requests come to server mostly simultaneous, we may face the same problem with [Many request update the same resources](#1-many-request-update-the-same-resources).
+So, it comes to my thinking that, instead of checking if a row is updated while I'm analyzing the data, I'll check if the entire table is updated or not.
+Of course, you can still use the old solution by creating a table, storing the last time data of event table is updated, but with that, we have to create new table, and I dont want that.
+
+Okay, we had the idea, but how to implement it? To implement this solution, we need to know the last time data in the events table is updated.
+We can archive this by using query: `select max(updated_at) from events`, right?
+
+So, in the update query, we have to compare the `updated_at` we are having with the result of above SQL.
+If affected row = 0, it means data in the table has been updated, and we should re-analyze data before insert/update to prevent the overlapping of time ranges.
+
+Another thing is, we can not use `where` when insert data, so we need to use a trick that we insert data from `select` statement, in that select, we will inject where condition of us to make sure data does not change.
+
+The query to insert will be:
+
+```sql
+insert into events (...) select (...) where (select floor(extract(epoch from max(updated_at)) * 1000) from events) = ${maxUpdatedAt.getTime()}
+```
