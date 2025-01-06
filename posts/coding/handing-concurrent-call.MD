@@ -117,7 +117,7 @@ What is the hardest part of this constraint? It's the `time ranges must not be o
 Let's assume there is two request come to create event with `start_time = '2024-01-01'` and `display_end_time = '2025-01-01'`.
 So, the expected result would be 1 request will create successfully and the other is failed.
 
-But, if these requests come to server mostly simultaneous, we may face the same problem with [Many request update the same resources](#1-many-request-update-the-same-resources).
+But, if these requests come to server mostly simultaneous, we may face the same problem with [1. Many request update the same resources](#1-many-request-update-the-same-resources).
 So, it comes to my thinking that, instead of checking if a row is updated while I'm analyzing the data, I'll check if the entire table is updated or not.
 Of course, you can still use the old solution by creating a table, storing the last time data of event table is updated, but with that, we have to create new table, and I dont want that.
 
@@ -126,11 +126,38 @@ We can archive this by using query: `select max(updated_at) from events`, right?
 
 So, in the update query, we have to compare the `updated_at` we are having with the result of above SQL.
 If affected row = 0, it means data in the table has been updated, and we should re-analyze data before insert/update to prevent the overlapping of time ranges.
+But, we can not use `where` when insert data, so we need to use a trick that we insert data from `select` statement, in that select, we will inject where condition of us to make sure data does not change.
 
-Another thing is, we can not use `where` when insert data, so we need to use a trick that we insert data from `select` statement, in that select, we will inject where condition of us to make sure data does not change.
+This solution might work, right?
+Well, there is another *but*.
+The behavior when updating table is different with updating one row.
+As I explained in [1. Many request update the same resources](#1-many-request-update-the-same-resources),
+when you update a row,
+another update to that row will be pending until the transaction holds the first update query commits.
+So, we can use `updated_at` as a condition to check if the data has been updated or not.
+But, in the table level, the second query will not be pending,
+because these queries don't update the same row, so these two still update successfully.
+
+Flow will be:
+1. Query 1 and 2 get data from db almost simultaneously, so it'll have the same updated_at
+2. Query 1 (update to row id = 10) and query 2 (update to row id = 13) update data to db, and because its transaction is not committed yet, so the `max(updated_at)` still remains the same as it get.
+3. Transaction's query 1 and transaction's query 2 commit. So, time range will be overlapped.
+
+How can we prevent this from happening?
+We have to find a way that when query 1 is updating the table events, other queries want to update events table have to wait (just like when updating one row) without blocking any read data from events table.
+In postgres, we can use explicit locking. Postgres provides many lock modes to control concurrent access to data in table. You can read that in [This article](https://www.postgresql.org/docs/current/explicit-locking.html)
+In our case, the `SHARE ROW EXCLUSIVE` is suitable (*This mode protects a table against concurrent data changes, and is self-exclusive so that only one session can hold it at a time.*).
+Basically, it prevents other queries that required change to table (update, delete, insert, ...) while there is a query changing data in table. Read queries still work fine.
+
+So, when start a transaction, we run this sql first: `LOCK TABLE events IN SHARE ROW EXCLUSIVE MODE;`
 
 The query to insert will be:
 
 ```sql
+begin;
+LOCK TABLE events IN SHARE ROW EXCLUSIVE MODE;
+-- other queries
 insert into events (...) select (...) where (select floor(extract(epoch from max(updated_at)) * 1000) from events) = ${maxUpdatedAt.getTime()}
+--other queries
+commit;
 ```
