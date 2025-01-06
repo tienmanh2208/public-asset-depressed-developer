@@ -23,8 +23,6 @@ Assume you have multiple requests (both deduct and add) to the balance of a user
 
 The normal flow would be:
 
-// Image illustrates flow get balance, add, and update to db
-
 Request 1 wants to add r1 to balance of user.
 Request 2 wants to add r2 to balance of user.
 
